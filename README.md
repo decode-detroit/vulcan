@@ -1,153 +1,96 @@
-# Apollo
-#### Realtime Remote-Controlled Multimedia Player
+# Vulcan
+#### Realtime Remote-Controlled DMX Controller
 
-This media player is designed for realtime playback of audio and video in theatrical and interactive applications. Configure the display locations and cue new media over http, either on the same computer or from the web.
+This dmx controller is designed for realtime control of dmx signals in theatrical and interactive applications. Control a dmx universe over http, either on the same computer or from the web.
 
 ## Getting Started
 
-If you're on a 64-bit GNU/Linux system, you can use the the [binary release here](https://github.com/decode-detroit/apollo/releases). *Note:* The Wayland display server is not yet supported. Try the Wayland branch at your own risk.
+If you're on a 64-bit GNU/Linux system, you can use the the [binary release here](https://github.com/decode-detroit/apollo/releases).
 
-Binary releases for other systems are a work in progress. In the meantime, you'll need a few things to compile and run Apollo:
+Binary releases for other systems are a work in progress. In particular, a bug in Tokio Serial prevents this program from working properly on Windows. In the meantime, you can compile Vulcan from source:
 
 ### Prerequisites
 
-You'll need Rust, GTK+, and GStreamer to compile and run Apollo.
+You'll need Rust to compile and run Vulcan.
 
 * Installation of Rust: https://www.rust-lang.org/
-* Installation of GTK+: https://www.gtk.org/ (This is usually installed already on GNU/Linux systems. Search for package libgtk-3-0, and libgtk-3-dev if you'd like to compile Apollo.)
 
-Follow the directions on both websites to download and install these tools before you proceed.
-
-To install GStreamer on a Debian-like system,
-```
-sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstrtspserver-1.0-dev libges-1.0-dev
-```
-
-If you're on a different system, you'll need to follow the platform-specific instructions for GStreamer-rs: https://gitlab.freedesktop.org/gstreamer/gstreamer-rs
+Follow the directions to download and install Rust before you proceed.
 
 ### Compiling
 
 Once you have installed the prerequities above, clone or download this repository. Then compile and run the program using Cargo (included with Rust):
 ```
-cargo run
+cargo run -- -p /dev/ttyUSB0
 ```
 
-This will take several minutes to download all the components. You'll be left with a running Apollo instance in the background. You can use
+This will take several minutes to download all the components. You'll be left with a running Vulcan instance in the background. You may need to change the specified path to the hardward to something other than /dev/ttyUSB0 to match the location of your hardware.
+
+You can use
 ```
-cargo run
+cargo run -- -p /dev/ttyUSB0
 ```
 
-to run Apollo again (it will not recompile this time). This is a debug version (larger file, but otherwise perfectly functional).
+to run Vulcan again (it will not recompile this time). This is a debug version (larger file, but otherwise perfectly functional).
 
 To compile a finished copy for deployment, use
 ```
 cargo build --release
 ```
 
-The completed binary will be located in the automatically generated "target/release" folder with the name "apollo".
-
-### Issues Compiling
-
-If you run into issues with glib-2.0 or gdk-3.0, you can run these commands on a Debian-like system:
-
-glib2.0 issue: 
-```
-sudo apt install libgtk2.0-dev
-```
-
-gdk-3.0 issue:
-```
-sudo apt install build-essential libgtk-3-dev
-```
+The completed binary will be located in the automatically generated "target/release" folder with the name "vulcan".
 
 ## Usage
 
-To play media on Apollo, you need to
-1. Define the media channel, and
-2. Tell Apollo what media to play on that channel.
+To cue DMX changes on Vulcan, you need to specify a path to the DMX hardware interface. Vulcan supports the DMX King USB hardware interface. Support for other hardware will likely be added in the future.
 
-You can have as many channels as you like (currrently tested with eleven simultaneous channels), but only one piece of media playing on each channel at a time.
+Once the program is started, you can control the interface with two commands (more coming in the future):
+1. Play a DMX fade (fading from the current value to a specified future value over a set time)
+2. Set the value of all the channels at once (useful for initial setting or resuming)
 
-### Application Window Options
+### Play Fade Options
 
-*Before* you specify a media channel, you have the option to specify the properties of the application window where it will be displayed. Remember that these settings only take effect if applied before adding a media channel to the window.
+Here are the play fade options:
+* channel: the DMX channel (out of 512) that will be modified by the fade.
+* value: the final 8-bit value of the channel (for a light fixture, typically 0 is off and 255 is full brightness)
+* duration: a two element field that specifies the seconds and nano seconds (secs and nanos are field names) that the controller should take to arrive at this new value. The controller will fade from the current value of the channel to this new value linearly. More elaborate fades and animations may be available in the future.
 
-Here are the application window options:
-* windowNumber: a unique number for the application window. Channels with the same window number will appear on the same application window and will be stacked from first-defined to last-defined on the top.
-* fullscreen: a true or false value to indicate whether the window should be set to fullscreen.
-* windowDimensions: a two element tuple that specifies the minimum size of the application window that holds the video screen. If the application window is set to fullscreen, you can use this tool to stretch the application window across multiple monitors.
+### Load Universe Options
 
-### Media Channel Options
-
-When you define a channel, you have the option to specify where the audio is played and where the video is played. If you leave these options empty, Apollo with use the system default for audio and open a new window (sized to the content) to play video.
-
-Here are the media channel options:
-* channel: the channel number
-* videoFrame: a structure that defines the location and size of the video screen. Defaults to a new window generated by gstreamer.
-* audioDevice: the audio device for playing any sound. Defaults to the system default.
-* loopMedia: the media (video or audio) to loop when no other media is playing on this channel. Defaults to nothing if left blank.
-
-A video frame has several parameters:
-* windowNumber: a number for the *application* window. Channels with the same window number will appear on the same application window and will be stacked from first-defined to last-defined on the top.
-* top: distance (in pixels) from the top of the application window to the top of the video.
-* left: distance (in pixels) from the left side of the application window to the left side of the video.
-* height: height (in pixels) of the video screen
-* width: (in pixels) of the video screen
-
-An audio device has several options as well:
-* a Pulse audio device (with deviceName parameter): a high-level toolkit which is recommended for most purposes. Multiple chanels can share a device and will automatically be mixed together.
-* an Alsa device (with deviceName parameter): a lower-level toolkit usefull when trying to pick a specific display on a graphics card. ***WARNING:*** Only one channel can use an Alsa device at a time - Alsa does not have the capability to mixdown multiple audio sources.
-
-### Cue Media Options
-
-When you cue a specific file for Apollo to play, it will begin instantly (or nearly instantly, depending on the capabilities of the computer). You have the option to play any type of media on any channel, though in practice you will typically have separate audio channels and video channels.
-
-Here are the cue media options:
-* uri: the location of the video or audio file to play. The uri format must follow the URI syntax rules. This means local files must be specified like "file:///absolute/path/to/file.mp4".
-* channel: the media channel to play the video or audio. New media sent to the same channel will replace the old media, starting instantly.
-* loopMedia: the location of media to loop after this media is complete. If a file is specified in the loop media field, it takes priority over the channel loop media field.
+The load universe specifies a value for every channel in a DMX universe at once. This option expects an array of 512 values.
 
 ### RESTful API
 
-You can define media channels and cue media using the two available POST commands on localhost port 27655 (A-P-O-L-L). An example interaction might look like this:
+You can cue fades and load DMX values using the two available POST commands on localhost port 88522 (V-U-L-C-A). An example interaction might look like this:
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "videoFrame": { "windowNumber": 1, "top": 100, "left": 100, "height": 300, "width": 400}}' http://localhost:27655/defineChannel
-curl -H "Content-Type: application/json" -X POST -d '{ "uri": "https://archive.org/download/never-gonna-give-you-up-4-k/Never%20Gonna%20Give%20You%20Up%204K.ia.mp4", "channel": 1}' http://localhost:27655/cueMedia
+curl -H "Content-Type: application/json" -X POST -d '{ "universe", [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}' http://localhost:88522/loadUniverse
+curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "value": 255, duration { "secs": 1, "nanos": 0 }}' http://localhost:88522/playfade
 ```
 
-Then, perhaps:
-```
-curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "videoFrame": { "top": 0, "left": 0, "height": 600, "width": 800}}' http://localhost:27655/resizeChannel
-curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "direction": "down"}' http://localhost:27655/alignChannel
-curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "position": 2000}' http://localhost:27655/seek
-```
-
-And mercifully
-```
-curl -H "Content-Type: application/json" -X POST -d '{ "channel": 1, "state": "paused"}' http://localhost:27655/changeState
-curl -H "Content-Type: application/json" -X POST http://localhost:27655/quit
-```
+The DMX channels are initialized to zero, so the first command above does nothing on a new instance of Vulcan.
 
 The port number (and listening location) can be adjusted with the '-a' or '--address' commandline option, and log level can be set via the '-l' or '--logLevel' option. Log levels are Trace, Info, Debug, Warn, Error (listed in decreasing level of verbosity).
 
-If you need to make Apollo available to the open internet, we recommend [Caddy](https://caddyserver.com/). Follow the instructions for setting up a reverse proxy (it will take less than 60 seconds).
+Remember that you always need to specify a path to the DMX hardware (with option '-p' or '--path') for the program to load.
 
-In the future, additional options such as changing media to a different channel, swapping channel position, etc., will be added based on our own needs. If you are using Apollo and have a specific feature you need, feel free to send us an email and we'll do our best to make it a priority.
+If you need to make Vulcan available to the open internet, we recommend [Caddy](https://caddyserver.com/). Follow the instructions for setting up a reverse proxy (it will take less than 60 seconds).
+
+In the future, additional fade animations and other features will be added based on our own needs. If you are using Vulcan and have a specific feature you need, feel free to send us an email and we'll do our best to make it a priority.
+
+## Realtime Backup
+
+If you would like realtime backup of the dmx controller for intant recovery, install a Redis server on your machine. The most up-to-date instructions for installing Redis can be found here: https://redis.io/.
+
+The default configuration should work just fine, and Vulcan will update the settings to make sure every change is written to the disk. To connect to the backup server, use the commandline option '-b' or '--backup'. The typical server location is redis://127.0.0.1:6379.
 
 ## Raspberry Pi-like Systems (ARM)
 
-It's possible to run Apollo on less-capible systems! For example, a Raspberry Pi 4 can manage audio very well, and plays video acceptably (with a small delay at the start of each).
-
-Take careful notes of the steps to
-* cross-compile Apollo, and
-* setup your Raspberry Pi host to run Apollo
+It's possible to run vulcan on less-capible systems! It should be fully featured on all systems it will compile for, but has only been tested on a full size PC.
 
 Note: These instructions are written for *compiling* the software on Ubuntu 22.04.
 
 ### Cross-Compiling for Raspberry Pi (armhf, 32bit)
-
-Note: These settings are largely analogous for arm64, but the 64-bit version hasn't been tested.
 
 To cross-compile, install the correct rust target and install the linker.
 ```
@@ -167,13 +110,7 @@ deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates universe
 deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ jammy multiverse
 deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates multiverse
 ```
-Make sure to add `[arch=amd64]` to the other sources while you're at it.
-
-Install the gtk dev packages for the new architecture.
-```
-sudo apt update
-sudo apt install libgtk-3-dev:armhf libzmq3-dev:armhf libgstreamer1.0-dev:armhf libgstreamer-plugins-base1.0-dev:armhf gstreamer1.0-plugins-base:armhf gstreamer1.0-plugins-good:armhf gstreamer1.0-plugins-bad:armhf gstreamer1.0-plugins-ugly:armhf gstreamer1.0-libav:armhf libgstrtspserver-1.0-dev:armhf libges-1.0-dev:armhf libges-1.0-0:armhf
-```
+Make sure to add `[arch=amd64]` to the original sources while you're at it.
 
 When you compile, pass several environment variables to the compilation.
 ```
@@ -200,24 +137,12 @@ deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates universe
 deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy multiverse
 deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates multiverse
 ```
-Make sure to add `[arch=amd64]` to the other sources while you're at it.
-
-Install the dev packages for the new architecture.
-```
-sudo apt update
-sudo apt install libgtk-3-dev:arm64 libzmq3-dev:arm64 libgstreamer1.0-dev:arm64 libgstreamer-plugins-base1.0-dev:arm64 gstreamer1.0-plugins-base:arm64 gstreamer1.0-plugins-good:arm64 gstreamer1.0-plugins-bad:arm64 gstreamer1.0-plugins-ugly:arm64 gstreamer1.0-libav:arm64 libgstrtspserver-1.0-dev:arm64 libges-1.0-dev:arm64 libges-1.0-0:arm64
-```
+Make sure to add `[arch=amd64]` to the original sources while you're at it.
 
 When you compile, pass several environment variables to the compilation.
 ```
 env PKG_CONFIG_ALLOW_CROSS=1 PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/ cargo build_arm64
 ```
-
-#### Prepare Your Raspberry Pi
-
-All that is needed is installing the packages above (i.e. GStreamer). If you're displaying video, you probably want to disable screen blanking in the Raspberry Pi Config settings.
-
-Hardware decoding works well for videos up to 1080p at 30 fps. There is a short delay when switching between playing videos, but there is no delay when playing a new video after the first has stopped.
 
 ## License
 

@@ -36,7 +36,7 @@ impl From<Fade> for Request {
 }
 impl From<Universe> for Request {
     fn from(universe: Universe) -> Self {
-        Request::Restore { universe }
+        Request::LoadUniverse { universe }
     }
 }
 
@@ -72,26 +72,26 @@ impl WebInterface {
             .and(WebInterface::with_json::<Fade>())
             .and_then(WebInterface::handle_request);
 
-        // Create the restore filter
-        let restore = warp::post()
-            .and(warp::path("restore"))
+        // Create the load universe filter
+        let load_universe = warp::post()
+            .and(warp::path("loadUniverse"))
             .and(warp::path::end())
             .and(WebInterface::with_clone(self.web_send.clone()))
             .and(WebInterface::with_json::<Universe>())
             .and_then(WebInterface::handle_request);
 
-        // Create the quit filter
-        let quit = warp::post()
-            .and(warp::path("quit"))
+        // Create the close filter
+        let close = warp::post()
+            .and(warp::path("close"))
             .and(warp::path::end())
             .and(WebInterface::with_clone(self.web_send.clone()))
-            .and(WebInterface::with_clone(Request::Quit))
+            .and(WebInterface::with_clone(Request::Close))
             .and_then(WebInterface::handle_request);
 
         // Combine the filters
         let routes = play_fade
-            .or(restore)
-            .or(quit);
+            .or(load_universe)
+            .or(close);
 
         // Handle incoming requests on the media port
         warp::serve(routes)

@@ -80,13 +80,13 @@ pub enum Request {
         fade: Fade, // the desired fade animation
     },
 
-    /// A variant to restore all the lights to a pre-defined value
-    Restore {
+    /// A variant to load all the lights to a defined value
+    LoadUniverse {
         universe: Universe,
     },
 
-    /// A variant to quit the program
-    Quit,
+    /// A variant to close the program and unload all the data
+    Close,
 }
 
 /// A type to cover all web replies

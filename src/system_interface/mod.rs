@@ -20,12 +20,14 @@
 //! to the application window.
 
 // Define submodules
+mod backup_handler;
 mod dmx_interface;
 
 // Import crate definitions
 use crate::definitions::*;
 
 // Import submodute definitions
+use backup_handler::BackupHandler;
 use dmx_interface::DmxInterface;
 
 // Import standard library features
@@ -43,23 +45,34 @@ use anyhow::Result;
 pub struct SystemInterface {
     web_receive: mpsc::Receiver<WebRequest>, // the receiving line for web requests
     dmx_interface: DmxInterface, // the structure for controlling dmx playback
+    backup_handler: BackupHandler, // the structure for maintaining the backup
 }
 
 // Implement key SystemInterface functionality
 impl SystemInterface {
     /// A function to create a new, blank instance of the system interface.
     ///
-    pub async fn new(path: PathBuf) -> Result<(Self, WebSend)> {
+    pub async fn new(path: PathBuf, address: String, server_location: Option<String>) -> Result<(Self, WebSend)> {
         // Create the web send for the web interface
         let (web_send, web_receive) = WebSend::new();
 
         // Try to initialize the dmx interface
         let dmx_interface = DmxInterface::new(&path)?;
 
+        // Try to initialize the backup handler
+        let mut backup_handler = BackupHandler::new(address, server_location).await;
+
+        // Check for existing data from the backup handler
+        if let Some(universe) = backup_handler.reload_backup() {
+            // Load the universe onto the dmx hardware
+            dmx_interface.set_universe(universe).await;
+        }
+
         // Create the new system interface instance
         let sys_interface = SystemInterface {
             web_receive,
             dmx_interface,
+            backup_handler,
         };
 
         // Regardless, return the new SystemInterface and general send line
@@ -78,26 +91,33 @@ impl SystemInterface {
                     // If performing a fade
                     Request::PlayFade { fade } => {
                         // Try to pass new fade to the dmx inferface
-                        if let Err(error) = self.dmx_interface.play_fade(fade).await {
+                        if let Err(error) = self.dmx_interface.play_fade(fade.clone()).await {
                             request.reply_to.send(WebReply::failure(format!("{}", error))).unwrap_or(());
                         
-                        // Otherwise indicate success
+                        // Otherwise
                         } else {
+                            // Save to the backup
+                            self.backup_handler.backup_fade(fade).await;
+
+                            // And indicate success
                             request.reply_to.send(WebReply::success()).unwrap_or(());
                         }
                     }
 
-                    // If restoring the dmx universe
-                    Request::Restore { universe } => {
+                    // If loading the dmx universe
+                    Request::LoadUniverse { universe } => {
                         // Pass the universe settings to the dmx interface
-                        self.dmx_interface.set_universe(universe).await;
+                        self.dmx_interface.set_universe(universe.clone()).await;
+
+                        // Save the universe to the backup
+                        self.backup_handler.backup_universe(universe).await;
 
                         // Reply success to the web interface
                         request.reply_to.send(WebReply::success()).unwrap_or(());
                     }
 
-                    // If quitting the program
-                    Request::Quit => {
+                    // If closing the program
+                    Request::Close => {
                         // End the loop
                         return false;
                     }

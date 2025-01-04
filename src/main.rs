@@ -62,6 +62,10 @@ struct Arguments {
     #[arg(short, long, default_value = DEFAULT_ADDRESS)]
     address: String,
 
+    /// Address for the backup server
+    #[arg(short, long, default_value = None)]
+    backup: Option<String>,
+
     /// Flag to set the log level
     #[arg(short, long, default_value = DEFAULT_LOGLEVEL)]
     log_level: String,
@@ -106,7 +110,7 @@ impl Vulcan {
         let _guard = Vulcan::setup_logging(arguments.log_level);
 
         // Launch the system interface to connect and control the DMX signals
-        let (system_interface, web_send) = SystemInterface::new(arguments.path)
+        let (system_interface, web_send) = SystemInterface::new(arguments.path, arguments.address.clone(), arguments.backup)
         .await.expect("Unable to create the System Interface.");
 
         // Create the web interface 
