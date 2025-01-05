@@ -5,7 +5,7 @@ This dmx controller is designed for realtime control of dmx signals in theatrica
 
 ## Getting Started
 
-If you're on a 64-bit GNU/Linux system, you can use the the [binary release here](https://github.com/decode-detroit/apollo/releases).
+If you're on a 64-bit GNU/Linux system, you can use the the [binary release here](https://github.com/decode-detroit/vulcan/releases).
 
 Binary releases for other systems are a work in progress. In particular, a bug in Tokio Serial prevents this program from working properly on Windows. In the meantime, you can compile Vulcan from source:
 
