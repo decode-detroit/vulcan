@@ -18,7 +18,7 @@
 //! This module defines all structures and types used across modules.
 
 // Define program constants
-pub const DEFAULT_ADDRESS: &str = "127.0.0.1:88522";
+pub const DEFAULT_ADDRESS: &str = "127.0.0.1:8852";
 pub const DEFAULT_LOGLEVEL: &str = "Info";
 
 // Define submodules
