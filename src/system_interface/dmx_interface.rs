@@ -96,6 +96,8 @@ impl DmxInterface {
             return Err(anyhow!("Background DMX thread has crashed."));
         }
 
+        println!("processing request");
+
         // If the fade was processed correctly, indicate success
         Ok(())
     }
@@ -291,6 +293,8 @@ impl Queue {
     /// A helper function to write the existing frame to the serial port
     ///
     async fn write_frame(&mut self) {
+        println!("writing to hardware");
+
         // Add the message header
         let mut bytes = Vec::new();
         bytes.push(COMMAND_START);
@@ -329,6 +333,7 @@ impl Queue {
 
             // Only wait for the resolution
             _ = sleep(Duration::from_millis(RESOLUTION)) => {
+                println!("writefailed");
                 // Mark the write as still waiting
                 self.is_write_waiting = true;
             }

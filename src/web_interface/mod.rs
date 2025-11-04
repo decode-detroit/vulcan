@@ -116,6 +116,8 @@ impl WebInterface {
         let (reply_to, rx) = oneshot::channel();
         web_send.send(reply_to, request.into()).await;
 
+        println!("Got request!");
+
         // Wait for the reply
         if let Ok(reply) = rx.await {
             // If the reply is a success
