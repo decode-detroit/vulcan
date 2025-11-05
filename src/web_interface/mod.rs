@@ -25,6 +25,9 @@ use crate::definitions::*;
 use tokio::sync::oneshot;
 use warp::{Filter, http};
 
+// Import futures
+use futures_util::FutureExt;
+
 // Import serde feaures
 use serde::de::DeserializeOwned;
 
@@ -94,7 +97,7 @@ impl WebInterface {
                 self.address
                     .parse::<std::net::SocketAddr>()
                     .expect("Unable to listen at specified address."),
-            )
+            ).boxed() // boxed to satisfy https://github.com/rust-lang/rust/issues/89976 and https://github.com/rust-lang/rust/issues/85516
             .await;
     }
 
