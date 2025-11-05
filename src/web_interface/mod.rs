@@ -97,7 +97,8 @@ impl WebInterface {
                 self.address
                     .parse::<std::net::SocketAddr>()
                     .expect("Unable to listen at specified address."),
-            ).boxed() // boxed to satisfy https://github.com/rust-lang/rust/issues/89976 and https://github.com/rust-lang/rust/issues/85516
+            )
+            .boxed() // boxed to satisfy https://github.com/rust-lang/rust/issues/89976 and https://github.com/rust-lang/rust/issues/85516
             .await;
     }
 
