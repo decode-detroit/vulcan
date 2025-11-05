@@ -44,15 +44,19 @@ use anyhow::Result;
 ///
 pub struct SystemInterface {
     web_receive: mpsc::Receiver<WebRequest>, // the receiving line for web requests
-    dmx_interface: DmxInterface, // the structure for controlling dmx playback
-    backup_handler: BackupHandler, // the structure for maintaining the backup
+    dmx_interface: DmxInterface,             // the structure for controlling dmx playback
+    backup_handler: BackupHandler,           // the structure for maintaining the backup
 }
 
 // Implement key SystemInterface functionality
 impl SystemInterface {
     /// A function to create a new, blank instance of the system interface.
     ///
-    pub async fn new(path: PathBuf, address: String, server_location: Option<String>) -> Result<(Self, WebSend)> {
+    pub async fn new(
+        path: PathBuf,
+        address: String,
+        server_location: Option<String>,
+    ) -> Result<(Self, WebSend)> {
         // Create the web send for the web interface
         let (web_send, web_receive) = WebSend::new();
 
@@ -93,7 +97,7 @@ impl SystemInterface {
                         // Try to pass new fade to the dmx inferface
                         if let Err(error) = self.dmx_interface.play_fade(fade.clone()).await {
                             request.reply_to.send(WebReply::failure(format!("{}", error))).unwrap_or(());
-                        
+
                         // Otherwise
                         } else {
                             // Save to the backup

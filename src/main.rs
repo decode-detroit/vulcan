@@ -91,7 +91,9 @@ impl Vulcan {
 
             // Otherwise, print a nice error
             _ => {
-                println!("Unable to parse parameter for option 'logLevel'. Options are Trace, Debug, Info, Warn, and Error.");
+                println!(
+                    "Unable to parse parameter for option 'logLevel'. Options are Trace, Debug, Info, Warn, and Error."
+                );
                 LevelFilter::INFO
             }
         };
@@ -110,10 +112,12 @@ impl Vulcan {
         let _guard = Vulcan::setup_logging(arguments.log_level);
 
         // Launch the system interface to connect and control the DMX signals
-        let (system_interface, web_send) = SystemInterface::new(arguments.path, arguments.address.clone(), arguments.backup)
-        .await.expect("Unable to create the System Interface.");
+        let (system_interface, web_send) =
+            SystemInterface::new(arguments.path, arguments.address.clone(), arguments.backup)
+                .await
+                .expect("Unable to create the System Interface.");
 
-        // Create the web interface 
+        // Create the web interface
         let mut web_interface = WebInterface::new(web_send, arguments.address);
 
         // Run the web interface in a new thread

@@ -184,11 +184,11 @@ impl Change {
 /// changes.
 ///
 pub struct Queue {
-    stream: serial::SerialStream,            // the serial port connection
-    universe: Universe,                   // the current universe of all the channels
+    stream: serial::SerialStream,        // the serial port connection
+    universe: Universe,                  // the current universe of all the channels
     queue_receive: mpsc::Receiver<Fade>, // the queue receiving line that sends additional fade items to the daemon
     changes: FnvHashMap<u32, Change>, // the dmx queue holding the coming changes, sorted by channel
-    is_write_waiting: bool, // a flag to indicate that a write is still waiting to be sent
+    is_write_waiting: bool,           // a flag to indicate that a write is still waiting to be sent
 }
 
 // Implement the Dmx Queue methods
@@ -268,11 +268,7 @@ impl Queue {
             // If a fade duration was specified
             Some(duration) => {
                 // Repack the fade as a dmx change
-                let change = Change::new(
-                    self.universe.get(fade.channel),
-                    fade.value,
-                    duration,
-                );
+                let change = Change::new(self.universe.get(fade.channel), fade.value, duration);
 
                 // Save the new fade, replace the existing fade if necessary
                 self.changes.insert(fade.channel, change);

@@ -74,16 +74,13 @@ pub enum Request {
     //DefineAllStop {
     //    universe: Universe, // the correct value of all the channels in emergency mode
     //},
-
     /// A variant to play a fade on a channel
     PlayFade {
         fade: Fade, // the desired fade animation
     },
 
     /// A variant to load all the lights to a defined value
-    LoadUniverse {
-        universe: Universe,
-    },
+    LoadUniverse { universe: Universe },
 
     /// A variant to close the program and unload all the data
     Close,

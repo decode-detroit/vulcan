@@ -57,10 +57,7 @@ impl BackupHandler {
     /// This function will raise an error if it is unable to connect to the
     /// Redis server provided.
     ///
-    pub async fn new(
-        address: String,
-        server_location: Option<String>,
-    ) -> Self {
+    pub async fn new(address: String, server_location: Option<String>) -> Self {
         // If a server location was specified
         if let Some(location) = server_location {
             // Try to connect to the Redis server

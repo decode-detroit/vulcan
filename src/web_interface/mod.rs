@@ -23,7 +23,7 @@ use crate::definitions::*;
 
 // Import Tokio and warp features
 use tokio::sync::oneshot;
-use warp::{http, Filter};
+use warp::{Filter, http};
 
 // Import serde feaures
 use serde::de::DeserializeOwned;
@@ -44,8 +44,8 @@ impl From<Universe> for Request {
 /// to the interface.
 ///
 pub struct WebInterface {
-    web_send: WebSend,  // send line to the system interface
-    address: String,    // web address endpoint
+    web_send: WebSend, // send line to the system interface
+    address: String,   // web address endpoint
 }
 
 // Implement key Web Interface functionality
@@ -55,10 +55,7 @@ impl WebInterface {
     ///
     pub fn new(web_send: WebSend, address: String) -> Self {
         // Return the new web interface and runtime handle
-        WebInterface {
-            web_send,
-            address,
-        }
+        WebInterface { web_send, address }
     }
 
     /// A method to listen for connections from the internet
@@ -89,9 +86,7 @@ impl WebInterface {
             .and_then(WebInterface::handle_request);
 
         // Combine the filters
-        let routes = play_fade
-            .or(load_universe)
-            .or(close);
+        let routes = play_fade.or(load_universe).or(close);
 
         // Handle incoming requests on the media port
         warp::serve(routes)

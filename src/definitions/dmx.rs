@@ -40,7 +40,7 @@ pub const DMX_MAX: u32 = 512; // the highest channel of DMX, exclusive
 ///
 /// NOTE: the chennels are internally zero-indexed,
 /// rather than the one-indexed standard of DMX
-/// 
+///
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Universe {
