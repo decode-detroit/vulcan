@@ -24,7 +24,7 @@ Once you have installed the prerequities above, clone or download this repositor
 cargo run -- -p /dev/ttyUSB0
 ```
 
-This will take several minutes to download all the components. You'll be left with a running Vulcan instance in the background. You may need to change the specified path to the hardward to something other than /dev/ttyUSB0 to match the location of your hardware.
+This will take several minutes to download all the components. You'll be left with a running Vulcan instance in the background. You may need to change the specified path to something other than /dev/ttyUSB0 to match the location of your hardware.
 
 You can use
 ```
@@ -80,7 +80,7 @@ In the future, additional fade animations and other features will be added based
 
 ## Realtime Backup
 
-If you would like realtime backup of the dmx controller for intant recovery, install a Redis server on your machine. The most up-to-date instructions for installing Redis can be found here: https://redis.io/.
+If you would like realtime backup of the dmx controller for instant recovery, install a Redis server on your machine. The most up-to-date instructions for installing Redis can be found here: https://redis.io/.
 
 The default configuration should work just fine, and Vulcan will update the settings to make sure every change is written to the disk. To connect to the backup server, use the commandline option '-b' or '--backup'. The typical server location is redis://127.0.0.1:6379.
 
