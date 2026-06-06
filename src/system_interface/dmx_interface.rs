@@ -351,7 +351,7 @@ mod tests {
 
         // Create a DMX Interface on USB0
         let interface = DmxInterface::new(&Path::new("/dev/ttyUSB0"))
-            .expect("Unable to connect to DMX on USB0.");
+            .expect("Unable to connect to DMX on USB0");
 
         // Play a fade up on channel 1
         interface
