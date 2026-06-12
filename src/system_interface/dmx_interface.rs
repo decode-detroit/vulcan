@@ -47,9 +47,11 @@ const DMX_START_CODE: u8 = 0x00 as u8; // the DMX start code
 const COMMAND_END: u8 = 0xE7 as u8; // the end of the command
 
 // Define fade constants
-const RESOLUTION: u64 = 50; // the time resolution of each fade, in ms
+const RESOLUTION: u64 = 50; // the time resolution of each fade, in ms FIXME Test at up to 25ms
 
-/// A structure to hold and manipulate the connection over serial
+/// A structure to hold and manipulate the DMX serial connection and manage
+/// updates including universe updates and fades. This struct passes updates
+/// to the DMX connection as needed.
 ///
 pub struct DmxInterface {
     load_fade: mpsc::Sender<Fade>, // a line to load the dmx fade into the queue
@@ -95,8 +97,6 @@ impl DmxInterface {
         if let Err(_) = self.load_fade.send(fade).await {
             return Err(anyhow!("Background DMX thread has crashed."));
         }
-
-        println!("processing request");
 
         // If the fade was processed correctly, indicate success
         Ok(())
@@ -178,9 +178,8 @@ impl Change {
     }
 }
 
-/// A struct to hold a queue of future dmx changes. This struct launches a
-/// separate daemon to preserve ordering of the changes and minimize the spread
-/// of unnecessary threads. This version preserves the proper order of the dmx
+/// A struct to hold a queue of future dmx changes. This struct should be opened
+/// in a separate thread. This version preserves the proper order of the dmx
 /// changes.
 ///
 pub struct Queue {
@@ -289,8 +288,6 @@ impl Queue {
     /// A helper function to write the existing frame to the serial port
     ///
     async fn write_frame(&mut self) {
-        println!("writing to hardware");
-
         // Add the message header
         let mut bytes = Vec::new();
         bytes.push(COMMAND_START);
@@ -314,6 +311,7 @@ impl Queue {
                     // If the bytes match
                     if sent_bytes == bytes.len() {
                         // Mark the write as complete
+                        println!("Wrote to serial: {:?}", bytes.as_slice()); // FIXME Temporary for debugging
                         self.is_write_waiting = false;
 
                     // Otherwise, mark the write as incomplete
@@ -329,7 +327,6 @@ impl Queue {
 
             // Only wait for the resolution
             _ = sleep(Duration::from_millis(RESOLUTION)) => {
-                println!("writefailed");
                 // Mark the write as still waiting
                 self.is_write_waiting = true;
             }
@@ -351,7 +348,7 @@ mod tests {
 
         // Create a DMX Interface on USB0
         let interface = DmxInterface::new(&Path::new("/dev/ttyUSB0"))
-            .expect("Unable to connect to DMX on USB0");
+            .expect("Unable to connect to DMX on USB0.");
 
         // Play a fade up on channel 1
         interface
