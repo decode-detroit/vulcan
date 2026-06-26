@@ -47,7 +47,7 @@ const DMX_START_CODE: u8 = 0x00 as u8; // the DMX start code
 const COMMAND_END: u8 = 0xE7 as u8; // the end of the command
 
 // Define fade constants
-const RESOLUTION: u64 = 50; // the time resolution of each fade, in ms FIXME Test at up to 25ms
+const RESOLUTION: u64 = 25; // the time resolution of each fade, in ms FIXME Test at up to 25ms
 
 /// A structure to hold and manipulate the DMX serial connection and manage
 /// updates including universe updates and fades. This struct passes updates
