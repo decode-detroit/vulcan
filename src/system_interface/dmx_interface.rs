@@ -32,6 +32,9 @@ use tokio::sync::mpsc;
 use tokio::time::sleep;
 use tokio_serial as serial;
 
+// Import tracing features
+use tracing::{error, warn};
+
 // Import FNV HashMap
 use fnv::FnvHashMap;
 
@@ -47,7 +50,10 @@ const DMX_START_CODE: u8 = 0x00 as u8; // the DMX start code
 const COMMAND_END: u8 = 0xE7 as u8; // the end of the command
 
 // Define fade constants
-const RESOLUTION: u64 = 25; // the time resolution of each fade, in ms FIXME Test at up to 25ms
+const RESOLUTION: u64 = 25; // the time resolution of each fade, in ms
+
+// Define constants for device errors
+const RESET_DELAY: u64 = 100; // the time the program will idle while waiting for the device to become available, in ms
 
 /// A structure to hold and manipulate the DMX serial connection and manage
 /// updates including universe updates and fades. This struct passes updates
@@ -63,7 +69,7 @@ impl DmxInterface {
     ///
     pub fn new(path: &Path) -> Result<Self> {
         // Create and configure a builder to connect to the underlying serial port
-        let builder = serial::new(path.to_str().unwrap_or(""), 9600)
+        let builder = serial::new(path.to_str().unwrap_or(""), 115200)
             .data_bits(serial::DataBits::Eight)
             .parity(serial::Parity::None)
             .stop_bits(serial::StopBits::One)
@@ -307,27 +313,38 @@ impl Queue {
             // If the serial stream is available
             Ok(_) = self.stream.writable() => {
                 // Try to send the universe to the DMX contoller
-                if let Ok(sent_bytes) = self.stream.try_write(bytes.as_slice()) {
-                    // If the bytes match
-                    if sent_bytes == bytes.len() {
-                        // Mark the write as complete
-                        println!("Wrote to serial: {:?}", bytes.as_slice()); // FIXME Temporary for debugging
-                        self.is_write_waiting = false;
+                match self.stream.try_write(bytes.as_slice()) {
+                    // On success
+                    Ok(sent_bytes) => {
+                        // If the bytes match
+                        if sent_bytes == bytes.len() {
+                            // Mark the write as complete
+                            self.is_write_waiting = false;
 
-                    // Otherwise, mark the write as incomplete
-                    } else {
-                        self.is_write_waiting = true;
+                        // Otherwise, mark the write as incomplete
+                        } else {
+                            error!("Write failed: Wrong number of bytes written.");
+                            self.is_write_waiting = true;
+
+                            // Wait for the reset delay
+                            warn!("Assuming stream is broken. Waiting for device to reset ...");
+                            sleep(Duration::from_millis(RESET_DELAY)).await;
+                            warn!("Resuming now.");
+                        }
                     }
 
-                // Otherwise, mark the write as incomplete
-                } else {
-                    self.is_write_waiting = true;
+                    // Otherwise, mark the write as incomplete
+                    Err(error) => {
+                        error!("Write failed: {}.", error);
+                        self.is_write_waiting = true;
+                    }
                 }
             }
 
             // Only wait for the resolution
             _ = sleep(Duration::from_millis(RESOLUTION)) => {
                 // Mark the write as still waiting
+                warn!("Write pending: Timeout waiting for socket to be writable.");
                 self.is_write_waiting = true;
             }
         }
