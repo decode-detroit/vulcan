@@ -61,12 +61,12 @@ impl Universe {
     ///
     pub fn get(&self, channel: u32) -> u8 {
         // Check the bounds
-        if (channel > DMX_MAX) | (channel < 1) {
+        if !(1..=DMX_MAX).contains(&channel) {
             return 0; // default to zero
         }
 
         // Otherwise, convert to zero-indexed and return the value
-        return self.values[channel as usize - 1];
+        self.values[channel as usize - 1]
     }
 
     /// Method to set the value of a paticular channel

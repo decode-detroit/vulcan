@@ -30,9 +30,6 @@ use tracing::{error, warn};
 // Imprt redis client library
 use redis::{Commands, ConnectionLike, RedisResult};
 
-// Import YAML processing library
-use serde_yaml;
-
 /// A structure which holds a reference to the Redis server (if it exists) and
 /// syncronizes local data to and from the server.
 ///
@@ -74,7 +71,7 @@ impl BackupHandler {
                     );
 
                     // Unpack the result from the operation
-                    if let Err(..) = result {
+                    if result.is_err() {
                         // Warn that it wasn't possible to update the current scene
                         error!("Unable to set Redis snapshot settings.");
                     }
@@ -137,7 +134,7 @@ impl BackupHandler {
             );
 
             // Alert that the channel list was not set
-            if let Err(..) = result {
+            if result.is_err() {
                 error!("Unable to backup fade onto backup server.");
             }
 
@@ -173,12 +170,12 @@ impl BackupHandler {
 
             // Try to copy the data to the server
             let result: RedisResult<bool> = connection.set(
-                &format!("vulcan:{}:universe", self.address),
+                format!("vulcan:{}:universe", self.address),
                 &universe_string,
             );
 
             // Alert that the channel list was not set
-            if let Err(..) = result {
+            if result.is_err() {
                 error!("Unable to backup universe onto backup server.");
             }
 
@@ -200,7 +197,7 @@ impl BackupHandler {
         if let Some(mut connection) = self.connection.take() {
             // Check to see if there is a universe
             let result: RedisResult<String> =
-                connection.get(&format!("vulcan:{}:universe", self.address));
+                connection.get(format!("vulcan:{}:universe", self.address));
 
             // If something was received
             if let Ok(universe_string) = result {
@@ -245,7 +242,7 @@ impl Drop for BackupHandler {
         // If the redis connection exists
         if let Some(mut connection) = self.connection.take() {
             // Try to delete the universe backup if it exists
-            let _: RedisResult<bool> = connection.del(&format!("vulcan:{}:universe", self.address));
+            let _: RedisResult<bool> = connection.del(format!("vulcan:{}:universe", self.address));
         }
     }
 }

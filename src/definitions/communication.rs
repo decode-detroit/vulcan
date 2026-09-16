@@ -126,7 +126,7 @@ impl WebReply {
     ///
     pub fn is_success(&self) -> bool {
         match self {
-            &WebReply::Generic { ref is_valid, .. } => is_valid.clone(),
+            WebReply::Generic { is_valid, .. } => *is_valid,
         }
     }
 }

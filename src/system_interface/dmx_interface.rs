@@ -42,12 +42,12 @@ use fnv::FnvHashMap;
 use anyhow::Result;
 
 // Define the communication constants
-const COMMAND_START: u8 = 0x7E as u8; // the start of the command
-const MESSAGE_LABEL: u8 = 0x06 as u8; // the message type label
-const DATA_LSB: u8 = 0x01 as u8; // the data least significant bit
-const DATA_MSB: u8 = 0x02 as u8; // the data most significant bit
-const DMX_START_CODE: u8 = 0x00 as u8; // the DMX start code
-const COMMAND_END: u8 = 0xE7 as u8; // the end of the command
+const COMMAND_START: u8 = 0x7E_u8; // the start of the command
+const MESSAGE_LABEL: u8 = 0x06_u8; // the message type label
+const DATA_LSB: u8 = 0x01_u8; // the data least significant bit
+const DATA_MSB: u8 = 0x02_u8; // the data most significant bit
+const DMX_START_CODE: u8 = 0x00_u8; // the DMX start code
+const COMMAND_END: u8 = 0xE7_u8; // the end of the command
 
 // Define fade constants
 const RESOLUTION: u64 = 25; // the time resolution of each fade, in ms
@@ -95,12 +95,12 @@ impl DmxInterface {
     ///
     pub async fn play_fade(&self, fade: Fade) -> Result<()> {
         // Verify the range of the selected channel
-        if (fade.channel > DMX_MAX) | (fade.channel < 1) {
+        if !(1..=DMX_MAX).contains(&fade.channel) {
             return Err(anyhow!("Selected DMX channel is out of range."));
         }
 
         // Send the fade to the background thread
-        if let Err(_) = self.load_fade.send(fade).await {
+        if self.load_fade.send(fade).await.is_err() {
             return Err(anyhow!("Background DMX thread has crashed."));
         }
 
@@ -172,14 +172,14 @@ impl Change {
         // If the fade factor is still greater than zero
         if fade_factor > 0.0 {
             // Return the correct fade amount with an ongoing fade
-            return FadeStatus::Ongoing(
+            FadeStatus::Ongoing(
                 ((self.end_value as f64) + (self.difference * fade_factor)) as u8,
-            );
+            )
 
         // If the fade factor is zero (the fade is complete)
         } else {
             // Return the final value and a complete fade
-            return FadeStatus::Complete(self.end_value);
+            FadeStatus::Complete(self.end_value)
         }
     }
 }
@@ -295,12 +295,7 @@ impl Queue {
     ///
     async fn write_frame(&mut self) {
         // Add the message header
-        let mut bytes = Vec::new();
-        bytes.push(COMMAND_START);
-        bytes.push(MESSAGE_LABEL);
-        bytes.push(DATA_LSB);
-        bytes.push(DATA_MSB);
-        bytes.push(DMX_START_CODE);
+        let mut bytes = vec![COMMAND_START, MESSAGE_LABEL, DATA_LSB, DATA_MSB, DMX_START_CODE];
 
         // Add the current universe to the message
         bytes.append(&mut self.universe.as_bytes());
