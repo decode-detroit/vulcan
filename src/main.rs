@@ -108,8 +108,8 @@ impl Vulcan {
     /// A function to build the main program and the web interface
     ///
     async fn run(arguments: Arguments) {
-        // Initialize logging (guard is held until the end of run())
-        let _guard = Vulcan::setup_logging(arguments.log_level);
+        // Initialize logging
+        Vulcan::setup_logging(arguments.log_level);
 
         // Launch the system interface to connect and control the DMX signals
         let (system_interface, web_send) =

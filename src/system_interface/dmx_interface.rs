@@ -172,9 +172,7 @@ impl Change {
         // If the fade factor is still greater than zero
         if fade_factor > 0.0 {
             // Return the correct fade amount with an ongoing fade
-            FadeStatus::Ongoing(
-                ((self.end_value as f64) + (self.difference * fade_factor)) as u8,
-            )
+            FadeStatus::Ongoing(((self.end_value as f64) + (self.difference * fade_factor)) as u8)
 
         // If the fade factor is zero (the fade is complete)
         } else {
@@ -295,7 +293,13 @@ impl Queue {
     ///
     async fn write_frame(&mut self) {
         // Add the message header
-        let mut bytes = vec![COMMAND_START, MESSAGE_LABEL, DATA_LSB, DATA_MSB, DMX_START_CODE];
+        let mut bytes = vec![
+            COMMAND_START,
+            MESSAGE_LABEL,
+            DATA_LSB,
+            DATA_MSB,
+            DMX_START_CODE,
+        ];
 
         // Add the current universe to the message
         bytes.append(&mut self.universe.as_bytes());

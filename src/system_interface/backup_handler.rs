@@ -129,7 +129,7 @@ impl BackupHandler {
 
             // Try to copy the data to the server
             let result: RedisResult<bool> = connection.set(
-                &format!("vulcan:{}:universe", self.address),
+                format!("vulcan:{}:universe", self.address),
                 &universe_string,
             );
 
